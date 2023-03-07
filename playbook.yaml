@@ -1,1 +1,38 @@
 
+---
+- name: Get CPU and memory usage and store it in a csv file, if they are more than 80%
+  hosts: all
+  become: true
+  tasks:
+    - name: Cleanup the old file
+      shell: |
+        rm -rf metrics.csv
+      delegate_to: localhost
+    - name: Create header line
+      lineinfile:
+        path: ./metrics.csv
+        line: "CPU USAGE,MEMORY,HOSTNAME"
+        state: present
+        create: yes
+      delegate_to: localhost
+    - name: Get CPU and memory usage
+      shell: |
+        echo "CPU Usage: $(top -bn1 | grep load | awk '{printf \"%.2f%%\\n\", $(NF-2)}')"
+        echo "Memory Usage: $(free -m | awk 'NR==2{printf \"%.2f%%\\n\", $3*100/$2}')"
+        echo "Host Name: $(hostname)"
+        top -bn1 | grep load | awk '{printf "%.2f%%\n", $(NF-2)}'
+        free -m | awk 'NR==2{printf "%.2f%%\n", $3*100/$2}'
+        hostname
+      register: usage
+    - name: Print CPU and memory usage
+      debug:
+        var: usage.stdout_lines
+    - name: Append result to file
+      lineinfile:
+        path: ./metrics.csv
+        line: "{{ hostvars[item]['usage'].stdout_lines[3:] | join(',') }}"
+        state: present
+        create: yes
+      delegate_to: localhost
+      when: hostvars[item]['usage'] is defined and (hostvars[item]['usage'].stdout_lines | length >= 5) and ((hostvars[item]['usage'].stdout_lines[3] | regex_replace('%','') | float > 10 or hostvars[item]['usage'].stdout_lines[4] | regex_replace('%','') | float > 5))
+      loop: "{{ ansible_play_hosts_all }}"
