@@ -1,18 +1,21 @@
 #####  Run the Playbook using ebow command
+```xml
 ansible-playbook playbook.yaml
-
+```
 ##### ansible-playbook playbook.yaml command every 15 minutes using crontab in Linux, you can follow these steps:
 
 1. Open the crontab editor by typing the following command in your terminal:
 
-##### crontab -e
-
+```xml
+crontab -e
+```
 2. If this is your first time using crontab, you may be prompted to select a default text editor.
 
 3. Once the editor opens, add the following line to the file:
 
-#####  */15 * * * * ansible-playbook /opt/playbook.yaml
-
+```xml
+*/15 * * * * ansible-playbook /opt/playbook.yaml
+```
 This line tells crontab to run the ansible-playbook command every 15 minutes. Make sure to replace /path/to/playbook.yaml with the actual path to your playbook file.
 
 4. Save and close the file.
