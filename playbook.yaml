@@ -34,5 +34,5 @@
         state: present
         create: yes
       delegate_to: localhost
-      when: hostvars[item]['usage'] is defined and (hostvars[item]['usage'].stdout_lines | length >= 5) and ((hostvars[item]['usage'].stdout_lines[3] | regex_replace('%','') | float > 10 or hostvars[item]['usage'].stdout_lines[4] | regex_replace('%','') | float > 5))
+      when: hostvars[item]['usage'] is defined and (hostvars[item]['usage'].stdout_lines | length >= 5) and ((hostvars[item]['usage'].stdout_lines[3] | regex_replace('%','') | float > 80 or hostvars[item]['usage'].stdout_lines[4] | regex_replace('%','') | float > 80))
       loop: "{{ ansible_play_hosts_all }}"
