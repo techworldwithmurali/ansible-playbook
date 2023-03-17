@@ -74,6 +74,7 @@
        password:
        from:
        to:
+       cc:
        subject: " System Mertics - CPU , Memory , /var Size"
        attach:
          - /opt/metrics.csv
