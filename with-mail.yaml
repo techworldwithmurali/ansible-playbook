@@ -77,6 +77,6 @@
        cc:
        subject: " System Mertics - CPU , Memory , /var Size"
        attach:
-         - /opt/metrics.csv
-         - /opt/var_logs.csv
+         - ./metrics.csv
+         - ./var_logs.csv
       delegate_to: localhost
