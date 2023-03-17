@@ -1,5 +1,5 @@
 - name: Get CPU and memory usage and store it in a csv file, if they are more than 80%
-  hosts: localhost
+  hosts: all
   become: true
   tasks:
     - name: Cleanup the metrics.csv old file
