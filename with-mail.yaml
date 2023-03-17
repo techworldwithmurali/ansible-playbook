@@ -1,0 +1,81 @@
+- name: Get CPU and memory usage and store it in a csv file, if they are more than 80%
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Cleanup the metrics.csv old file
+      shell: |
+        rm -rf metrics.csv
+      delegate_to: localhost
+    - name: Create header line
+      lineinfile:
+        path: ./metrics.csv
+        line: "CPU USAGE,MEMORY,HOSTNAME"
+        state: present
+        create: yes
+        mode: 0777
+      delegate_to: localhost
+    - name: Get CPU and memory usage
+      shell: |
+        echo "CPU Usage: $(top -bn1 | grep load | awk '{printf \"%.2f%%\\n\", $(NF-2)}')"
+        echo "Memory Usage: $(free -m | awk 'NR==2{printf \"%.2f%%\\n\", $3*100/$2}')"
+        echo "Host Name: $(hostname)"
+        top -bn1 | grep load | awk '{printf "%.2f%%\n", $(NF-2)}'
+        free -m | awk 'NR==2{printf "%.2f%%\n", $3*100/$2}'
+        hostname
+      register: usage
+    - name: Print CPU and memory usage
+      debug:
+        var: usage.stdout_lines
+    - name: Append result to file
+      lineinfile:
+        path: ./metrics.csv
+        line: "{{ hostvars[item]['usage'].stdout_lines[3:] | join(',') }}"
+        state: present
+        create: yes
+      delegate_to: localhost
+      when: hostvars[item]['usage'] is defined and (hostvars[item]['usage'].stdout_lines | length >= 5) and ((hostvars[item]['usage'].stdout_lines[3] | regex_replace('%','') | float > 80 or hostvars[item]['usage'].stdout_lines[4] | regex_replace('%','') | float > 80))
+      loop: "{{ ansible_play_hosts_all }}"
+        ################## Below condition is added to check if the var logs folder is more than 80%  ########################
+    - name: Check disk space usage
+      shell: |
+        df -h /var | awk '{ print $5 }' | tail -1 | sed 's/%//g'
+        hostname
+      register: disk_space
+    - name: Print the disk space
+      debug:
+        var: disk_space.stdout_lines[1]
+    - name: Cleanup the var_logs.csv old file
+      shell: |
+        rm -rf ./var_logs.csv
+      delegate_to: localhost
+    - name: Create header line for vars
+      lineinfile:
+        path: ./var_logs.csv
+        line: "VAR LOGS PERCENTAGE,HOSTNAME"
+        state: present
+        create: yes
+        mode: 0777
+      delegate_to: localhost
+    - name: Append var result to file
+      lineinfile:
+        path: ./var_logs.csv
+        line: "{{ hostvars[item]['disk_space'].stdout_lines | join(',') }}"
+        state: present
+        create: yes
+      delegate_to: localhost
+      when: disk_space.stdout_lines[0] | float > 80
+      loop: "{{ ansible_play_hosts_all }}"
+    - name: Sending notification mail
+      mail:
+       host: <your-SMTP-hostname>
+       subtype: html
+       port: 25
+       username:
+       password:
+       from:
+       to:
+       subject: " System Mertics - CPU , Memory , /var Size"
+       attach:
+         - /opt/metrics.csv
+         - /opt/var_logs.csv
+      delegate_to: localhost
