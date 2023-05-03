@@ -63,7 +63,7 @@
         state: present
         create: yes
       delegate_to: localhost
-      when: disk_space.stdout_lines[0] > 10
+      when: disk_space.stdout_lines[0] | regex_replace('%','') | float > 80
       loop: "{{ ansible_play_hosts_all }}"
     - name: Sending notification mail
       mail:
@@ -94,7 +94,7 @@
        attach:
          - ./var_logs.csv
       delegate_to: localhost
-      when: disk_space.stdout_lines[0] > 10
+      when: disk_space.stdout_lines[0] | regex_replace('%','') | float > 80
     - name: Check opt space usage
       shell: |
         df -h /opt | awk '{ print $5 }' | tail -1
@@ -122,7 +122,7 @@
         state: present
         create: yes
       delegate_to: localhost
-      when: opt_space.stdout_lines[0] > 80
+      when: opt_space.stdout_lines[0] | regex_replace('%','') | float > 80
       loop: "{{ ansible_play_hosts_all }}"
     - name: Sending notification mail
       mail:
@@ -138,7 +138,7 @@
        attach:
          - ./opt_logs.csv
       delegate_to: localhost
-      when: opt_space.stdout_lines[0] > 80
+      when: opt_space.stdout_lines[0] | regex_replace('%','') | float > 80
     - name: Check tmp space usage
       shell: |
         df -h /tmp | awk '{ print $5 }' | tail -1
@@ -166,7 +166,7 @@
         state: present
         create: yes
       delegate_to: localhost
-      when: tmp_space.stdout_lines[0] > 80
+      when: tmp_space.stdout_lines[0] | regex_replace('%','') | float > 80
       loop: "{{ ansible_play_hosts_all }}"
     - name: Sending notification mail
       mail:
@@ -182,4 +182,4 @@
        attach:
          - ./tmp_logs.csv
       delegate_to: localhost
-      when: tmp_space.stdout_lines[0] > 80
+      when: tmp_space.stdout_lines[0] | regex_replace('%','') | float > 80
